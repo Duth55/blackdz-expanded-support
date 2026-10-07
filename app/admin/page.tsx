@@ -16,16 +16,16 @@ export default async function AdminPage() {
   return (
     <div className="container page-shell admin-shell">
       <section className="page-hero">
-        <span className="eyebrow">PAINEL ADMIN</span>
-        <h1>BlackDz Support</h1>
-        <p>Gerencie assinaturas, planos, integração PicPay e sincronização dos cargos do Discord.</p>
+        <span className="eyebrow">PAINEL ADMINISTRATIVO</span>
+        <h1>DBC: BlackDz VIP</h1>
+        <p>Gerencie membros, assinaturas, planos, integração de pagamentos e sincronização dos cargos do Discord.</p>
       </section>
 
       {!hasDatabase() && <div className="notice warning"><strong>DATABASE_URL ausente.</strong><p>Conecte um PostgreSQL/Neon para habilitar o painel administrativo completo.</p></div>}
 
       <section className="metric-grid">
-        <div><span>Usuários</span><strong>{metrics.users}</strong></div>
-        <div><span>Assinaturas ativas</span><strong>{metrics.active}</strong></div>
+        <div><span>Membros</span><strong>{metrics.users}</strong></div>
+        <div><span>VIPs ativos</span><strong>{metrics.active}</strong></div>
         <div><span>MRR estimado</span><strong>{money(metrics.mrrCents)}</strong></div>
         <div><span>Pagamentos confirmados</span><strong>{metrics.payments}</strong></div>
       </section>

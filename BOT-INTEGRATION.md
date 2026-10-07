@@ -1,6 +1,6 @@
 # Integração com o BlackDz Community Bot V2.2.1
 
-O bot atual já possui a categoria/cargos de Patreon e perfis de permissões para esses cargos. Por isso, **não é necessário reescrever o bot para o site funcionar**.
+O bot atual já possui a categoria/cargos de membros VIP e perfis de permissões para esses cargos. Por isso, **não é necessário reescrever o bot para o site funcionar**.
 
 O site usa o mesmo bot apenas através da Discord REST API para:
 
@@ -35,8 +35,8 @@ Se a Vercel fornecer outro endereço, use o endereço real.
 O cargo do bot precisa estar acima de:
 
 ```text
-👑 Patreon VIP   1557153489019215965
-🌟 Patreon+       1557153493339611157
+👑 VIP+          1557153489019215965
+🌟 VIP           1557153493339611157
 💎 Apoiador       1557153494467878962
 ```
 

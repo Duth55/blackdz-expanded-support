@@ -122,7 +122,15 @@ async function ensureSchema() {
       const p = DEFAULT_PLANS[i];
       await sql`INSERT INTO plans (slug,name,role_id,price_cents,description,benefits,badge,featured,sort_order)
         VALUES (${p.slug}, ${p.name}, ${p.roleId}, ${p.priceCents}, ${p.description}, ${JSON.stringify(p.benefits)}::jsonb, ${p.badge}, ${p.featured}, ${i})
-        ON CONFLICT (slug) DO NOTHING`;
+        ON CONFLICT (slug) DO UPDATE SET
+          name=EXCLUDED.name,
+          role_id=EXCLUDED.role_id,
+          description=EXCLUDED.description,
+          benefits=EXCLUDED.benefits,
+          badge=EXCLUDED.badge,
+          featured=EXCLUDED.featured,
+          sort_order=EXCLUDED.sort_order,
+          updated_at=NOW()`;
     }
   })();
   return schemaReady;

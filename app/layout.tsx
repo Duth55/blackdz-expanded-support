@@ -4,8 +4,8 @@ import { getSession } from "@/lib/session";
 import { Nav } from "@/components/nav";
 
 export const metadata: Metadata = {
-  title: "BlackDz Expanded Support",
-  description: "Apoie o desenvolvimento do DBC: BlackDz Expanded e desbloqueie benefícios na comunidade.",
+  title: "DBC: BlackDz VIP",
+  description: "Área VIP oficial do DBC: BlackDz Expanded com planos, benefícios e integração com a BlackDz Community.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -20,8 +20,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <footer className="site-footer">
           <div className="container footer-inner">
             <div>
-              <strong>DBC: BlackDz Expanded</strong>
-              <p>Projeto independente da comunidade. Não afiliado à Mojang, Microsoft, Toei Animation ou Patreon.</p>
+              <strong>DBC: BlackDz VIP</strong>
+              <p>Sistema oficial de membros do DBC: BlackDz Expanded. Projeto independente da comunidade, sem afiliação com Mojang, Microsoft ou Toei Animation.</p>
             </div>
             <div className="footer-links">
               <a href="/termos">Termos</a>

@@ -1,19 +1,19 @@
-# BlackDz Expanded Support
+# DBC: BlackDz VIP
 
-Site de apoio recorrente para **DBC: BlackDz Expanded**, preparado para Vercel, Discord e PicPay.
+Site oficial do **DBC: BlackDz VIP**, o sistema de assinaturas e benefícios do DBC: BlackDz Expanded, preparado para Vercel, Discord e PicPay.
 
 ## O que já vem pronto
 
 - Landing page responsiva com identidade visual própria (sem depender de logo em imagem).
 - Página de planos e checkout.
 - Login OAuth2 com Discord.
-- Painel do apoiador.
+- Área VIP do membro.
 - Painel administrativo restrito ao Discord ID `1345387246282608751`.
 - Integração com o servidor Discord `1519101675703369778`.
 - Cargos configurados:
   - Apoiador: `1557153494467878962`
-  - Patreon+: `1557153493339611157`
-  - Patreon VIP: `1557153489019215965`
+  - VIP: `1557153493339611157`
+  - VIP+: `1557153489019215965`
 - Banco PostgreSQL/Neon.
 - Modo DEMO sem cobrança real.
 - Integração de recorrência PicPay via token temporário de cartão.
@@ -85,7 +85,7 @@ http://localhost:3000/api/auth/discord/callback
 https://SEU-PROJETO.vercel.app/api/auth/discord/callback
 ```
 
-O cargo mais alto do bot precisa ficar **acima dos três cargos de apoiador** na hierarquia do servidor, e o bot precisa da permissão **Gerenciar Cargos**.
+O cargo mais alto do bot precisa ficar **acima dos três cargos VIP** na hierarquia do servidor, e o bot precisa da permissão **Gerenciar Cargos**.
 
 > Nunca coloque `DISCORD_BOT_TOKEN` ou `DISCORD_CLIENT_SECRET` em variáveis `NEXT_PUBLIC_*`.
 
@@ -187,8 +187,8 @@ Não use credenciais ou conta de outra pessoa sem autorização. O titular da op
 Os valores iniciais são:
 
 - Apoiador: R$ 9,90/mês
-- Apoiador+: R$ 19,90/mês
-- Apoiador VIP: R$ 39,90/mês
+- VIP: R$ 19,90/mês
+- VIP+: R$ 39,90/mês
 
 No `/admin`, é possível alterar os preços exibidos no site. Se o preço já tiver sido criado como plano no PicPay, crie/atualize o plano correspondente no provedor antes de cobrar novos assinantes.
 

@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export function Brand() {
   return (
-    <Link href="/" className="brand" aria-label="BlackDz Expanded Support">
-      <span className="brand-mark">DZ</span>
+    <Link href="/" className="brand" aria-label="DBC: BlackDz VIP">
+      <span className="brand-mark"><span>DZ</span><i>VIP</i></span>
       <span className="brand-copy">
-        <strong>BlackDz Expanded</strong>
-        <small>Support</small>
+        <strong>DBC: BlackDz</strong>
+        <small>VIP</small>
       </span>
     </Link>
   );

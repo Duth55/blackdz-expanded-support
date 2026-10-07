@@ -7,7 +7,7 @@ export function DashboardActions({ canCancel }: { canCancel: boolean }) {
   const [message, setMessage] = useState<string | null>(null);
 
   async function cancel() {
-    if (!confirm("Deseja cancelar sua assinatura? O cargo de apoiador será removido.")) return;
+    if (!confirm("Deseja cancelar sua assinatura? Os benefícios e o cargo do plano serão removidos.")) return;
     setLoading(true);
     setMessage(null);
     const response = await fetch("/api/subscription/cancel", { method: "POST" });
@@ -19,7 +19,7 @@ export function DashboardActions({ canCancel }: { canCancel: boolean }) {
 
   return (
     <div className="action-row">
-      <a className="btn btn-secondary" href="/apoie">Ver planos</a>
+      <a className="btn btn-secondary" href="/vip">Ver planos</a>
       {canCancel && <button className="btn btn-danger" onClick={cancel} disabled={loading}>{loading ? "Cancelando..." : "Cancelar assinatura"}</button>}
       {message && <span className="inline-error">{message}</span>}
     </div>
