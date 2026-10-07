@@ -1,0 +1,24 @@
+BLACKDZ EXPANDED SUPPORT — COMEÇAR AQUI
+
+1) Crie um banco PostgreSQL gratuito no Neon e copie a DATABASE_URL.
+2) No Discord Developer Portal, use a mesma aplicação do seu bot e adicione a Redirect URL:
+   https://SEU-PROJETO.vercel.app/api/auth/discord/callback
+3) Copie .env.example e preencha as variáveis na Vercel (Settings > Environment Variables).
+4) Comece com PAYMENTS_MODE=demo. Publique e teste login, painel e planos sem cobrar ninguém.
+5) Quando tiver as credenciais comerciais do PicPay, configure o Sandbox, crie os planos em /admin e teste a recorrência.
+6) Só depois altere PAYMENTS_MODE=picpay e use as credenciais/URLs de produção fornecidas pelo PicPay.
+
+IMPORTANTE
+- Não coloque token do bot, Client Secret, SESSION_SECRET, DATABASE_URL ou PICPAY_CLIENT_SECRET no GitHub.
+- O bot precisa da permissão Gerenciar Cargos e seu cargo deve estar acima dos três cargos de apoiador.
+- O site só entrega o cargo após uma cobrança PicPay confirmada.
+- O ZIP original do bot enviado continha um .env; nenhum valor dele foi copiado para este projeto.
+
+IDs já configurados
+Dono: 1345387246282608751
+Servidor: 1519101675703369778
+Apoiador: 1557153494467878962
+Patreon+: 1557153493339611157
+Patreon VIP: 1557153489019215965
+
+Leia README.md para o passo a passo completo.
