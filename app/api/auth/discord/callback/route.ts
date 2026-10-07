@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { consumeOAuthState, setSession } from "@/lib/session";
+import {
+  createSessionToken,
+  OAUTH_STATE_COOKIE_NAME,
+  RETURN_TO_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+  oauthCookieOptions,
+  sessionCookieOptions,
+} from "@/lib/session";
 import { siteUrl } from "@/lib/config";
 import { upsertDiscordUser } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const state = request.nextUrl.searchParams.get("state");
-  if (!code || !(await consumeOAuthState(state))) {
-    return NextResponse.redirect(`${siteUrl()}/?auth=invalid_state`);
+  const receivedState = request.nextUrl.searchParams.get("state");
+  const expectedState = request.cookies.get(OAUTH_STATE_COOKIE_NAME)?.value;
+
+  if (!code || !receivedState || !expectedState || receivedState !== expectedState) {
+    const response = NextResponse.redirect(`${siteUrl()}/?auth=invalid_state`);
+    response.cookies.set(OAUTH_STATE_COOKIE_NAME, "", oauthCookieOptions(0));
+    response.cookies.set(RETURN_TO_COOKIE_NAME, "", oauthCookieOptions(0));
+    return response;
   }
 
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return NextResponse.json({ error: "Credenciais OAuth do Discord não configuradas." }, { status: 500 });
+  if (!clientId || !clientSecret) {
+    return NextResponse.json({ error: "Credenciais OAuth do Discord não configuradas." }, { status: 500 });
+  }
 
   const redirectUri = `${siteUrl()}/api/auth/discord/callback`;
   const tokenResponse = await fetch("https://discord.com/api/v10/oauth2/token", {
@@ -28,6 +41,7 @@ export async function GET(request: NextRequest) {
     }),
     cache: "no-store",
   });
+
   const token = await tokenResponse.json();
   if (!tokenResponse.ok || !token.access_token) {
     return NextResponse.redirect(`${siteUrl()}/?auth=discord_error`);
@@ -40,24 +54,24 @@ export async function GET(request: NextRequest) {
   const user = await userResponse.json();
   if (!userResponse.ok || !user.id) return NextResponse.redirect(`${siteUrl()}/?auth=user_error`);
 
-  await setSession({
-    id: user.id,
-    username: user.username,
-    globalName: user.global_name || null,
-    avatar: user.avatar || null,
-    email: user.email || null,
-  });
-  await upsertDiscordUser({
-    id: user.id,
-    username: user.username,
-    globalName: user.global_name || null,
-    avatar: user.avatar || null,
-    email: user.email || null,
-  });
+  const sessionUser = {
+    id: user.id as string,
+    username: user.username as string,
+    globalName: (user.global_name as string | null) || null,
+    avatar: (user.avatar as string | null) || null,
+    email: (user.email as string | null) || null,
+  };
 
-  const store = await cookies();
-  const returnTo = store.get("blackdz_return_to")?.value || "/dashboard";
-  store.set("blackdz_return_to", "", { path: "/", maxAge: 0 });
+  await upsertDiscordUser(sessionUser);
+
+  const returnTo = request.cookies.get(RETURN_TO_COOKIE_NAME)?.value || "/dashboard";
   const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/dashboard";
-  return NextResponse.redirect(`${siteUrl()}${safeReturnTo}`);
+  const response = NextResponse.redirect(`${siteUrl()}${safeReturnTo}`);
+
+  // Define os cookies diretamente na resposta do callback. Isso evita casos em
+  // que o login parece concluir, mas a chamada seguinte à API não recebe sessão.
+  response.cookies.set(SESSION_COOKIE_NAME, createSessionToken(sessionUser), sessionCookieOptions());
+  response.cookies.set(OAUTH_STATE_COOKIE_NAME, "", oauthCookieOptions(0));
+  response.cookies.set(RETURN_TO_COOKIE_NAME, "", oauthCookieOptions(0));
+  return response;
 }

@@ -1,3 +1,5 @@
+> **v1.0.1:** corrige persistência da sessão do login Discord no callback OAuth e reautenticação automática no checkout.
+
 # DBC: BlackDz VIP
 
 Site oficial do **DBC: BlackDz VIP**, o sistema de assinaturas e benefícios do DBC: BlackDz Expanded, preparado para Vercel, Discord e PicPay.

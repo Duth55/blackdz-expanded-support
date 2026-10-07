@@ -11,8 +11,9 @@ export type SessionUser = {
   exp: number;
 };
 
-const COOKIE_NAME = "blackdz_session";
-const STATE_COOKIE = "blackdz_oauth_state";
+export const SESSION_COOKIE_NAME = "blackdz_session";
+export const OAUTH_STATE_COOKIE_NAME = "blackdz_oauth_state";
+export const RETURN_TO_COOKIE_NAME = "blackdz_return_to";
 
 function secret() {
   const value = process.env.SESSION_SECRET;
@@ -26,6 +27,26 @@ function b64url(input: string | Buffer) {
 
 function sign(payload: string) {
   return crypto.createHmac("sha256", secret()).update(payload).digest("base64url");
+}
+
+export function sessionCookieOptions(maxAge = 60 * 60 * 24 * 7) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge,
+  };
+}
+
+export function oauthCookieOptions(maxAge = 60 * 10) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge,
+  };
 }
 
 export function createSessionToken(user: Omit<SessionUser, "exp">) {
@@ -56,42 +77,22 @@ export function verifySessionToken(token: string): SessionUser | null {
 
 export async function getSession() {
   const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
+  const token = store.get(SESSION_COOKIE_NAME)?.value;
   return token ? verifySessionToken(token) : null;
 }
 
+// Mantidos para uso em Server Actions/rotas simples. Nas rotas OAuth usamos
+// response.cookies diretamente para garantir que os cookies saiam na mesma resposta.
 export async function setSession(user: Omit<SessionUser, "exp">) {
   const store = await cookies();
-  store.set(COOKIE_NAME, createSessionToken(user), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  store.set(SESSION_COOKIE_NAME, createSessionToken(user), sessionCookieOptions());
 }
 
 export async function clearSession() {
   const store = await cookies();
-  store.set(COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  store.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
 }
 
-export async function createOAuthState() {
-  const state = crypto.randomBytes(24).toString("hex");
-  const store = await cookies();
-  store.set(STATE_COOKIE, state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 10,
-  });
-  return state;
-}
-
-export async function consumeOAuthState(received: string | null) {
-  const store = await cookies();
-  const expected = store.get(STATE_COOKIE)?.value;
-  store.set(STATE_COOKIE, "", { path: "/", maxAge: 0 });
-  return Boolean(received && expected && received === expected);
+export function createOAuthStateValue() {
+  return crypto.randomBytes(24).toString("hex");
 }

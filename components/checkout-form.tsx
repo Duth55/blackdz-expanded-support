@@ -66,10 +66,15 @@ export function CheckoutForm(props: Props) {
       if (props.paymentsMode === "demo") {
         const response = await fetch("/api/demo/subscribe", {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ planSlug: props.planSlug }),
         });
         const data = await response.json();
+        if (response.status === 401) {
+          window.location.href = `/api/auth/discord/start?returnTo=${encodeURIComponent(`/checkout/${props.planSlug}`)}`;
+          return;
+        }
         if (!response.ok) throw new Error(data.error || "Falha no modo de teste.");
         window.location.href = "/dashboard?demo=1";
         return;
@@ -106,6 +111,7 @@ export function CheckoutForm(props: Props) {
 
       const response = await fetch("/api/picpay/subscribe", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           planSlug: props.planSlug,

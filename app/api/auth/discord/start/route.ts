@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createOAuthState } from "@/lib/session";
+import { createOAuthStateValue, OAUTH_STATE_COOKIE_NAME, RETURN_TO_COOKIE_NAME, oauthCookieOptions } from "@/lib/session";
 import { siteUrl } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const clientId = process.env.DISCORD_CLIENT_ID;
   if (!clientId) return NextResponse.json({ error: "DISCORD_CLIENT_ID não configurado." }, { status: 500 });
 
-  const state = await createOAuthState();
+  const state = createOAuthStateValue();
   const returnTo = request.nextUrl.searchParams.get("returnTo") || "/dashboard";
   const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/dashboard";
-  const store = await cookies();
-  store.set("blackdz_return_to", safeReturnTo, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 10,
-  });
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -26,5 +17,9 @@ export async function GET(request: NextRequest) {
     scope: "identify email",
     state,
   });
-  return NextResponse.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
+
+  const response = NextResponse.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
+  response.cookies.set(OAUTH_STATE_COOKIE_NAME, state, oauthCookieOptions());
+  response.cookies.set(RETURN_TO_COOKIE_NAME, safeReturnTo, oauthCookieOptions());
+  return response;
 }
