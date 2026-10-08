@@ -1,51 +1,28 @@
 import { redirect } from "next/navigation";
-import { AdminConsole } from "@/components/admin-console";
-import { adminMetrics, getPlans, hasDatabase, listAdminData } from "@/lib/db";
-import { money, OWNER_DISCORD_ID } from "@/lib/config";
 import { getSession } from "@/lib/session";
+import { OWNER_DISCORD_ID } from "@/lib/config";
+import { listVipOrders } from "@/lib/db";
+import { AdminOrders } from "@/components/admin-orders";
 
 export default async function AdminPage() {
   const session = await getSession();
   if (!session) redirect("/api/auth/discord/start?returnTo=/admin");
-  if (session.id !== OWNER_DISCORD_ID) redirect("/");
-
-  const plans = await getPlans(true);
-  const metrics = await adminMetrics();
-  const data = await listAdminData();
+  if (session.id !== OWNER_DISCORD_ID) redirect("/dashboard");
+  const orders = await listVipOrders(200);
+  const pending = orders.filter((x) => x.status === "pending").length;
+  const approved = orders.filter((x) => x.status === "approved").length;
+  const rejected = orders.filter((x) => x.status === "rejected").length;
 
   return (
     <div className="container page-shell admin-shell">
-      <section className="page-hero">
-        <span className="eyebrow">PAINEL ADMINISTRATIVO</span>
-        <h1>DBC: BlackDz VIP</h1>
-        <p>Gerencie membros, assinaturas, planos, integração de pagamentos e sincronização dos cargos do Discord.</p>
+      <section className="page-hero"><span className="eyebrow">ADMIN • DBC: BLACKDZ VIP</span><h1>Pedidos V.I.P</h1><p>Além dos botões no Discord, você pode acompanhar e analisar pedidos por aqui como alternativa.</p></section>
+      <section className="admin-stat-grid">
+        <div><strong>{pending}</strong><span>Em análise</span></div>
+        <div><strong>{approved}</strong><span>Aprovados</span></div>
+        <div><strong>{rejected}</strong><span>Recusados</span></div>
+        <div><strong>{orders.length}</strong><span>Total</span></div>
       </section>
-
-      {!hasDatabase() && <div className="notice warning"><strong>DATABASE_URL ausente.</strong><p>Conecte um PostgreSQL/Neon para habilitar o painel administrativo completo.</p></div>}
-
-      <section className="metric-grid">
-        <div><span>Membros</span><strong>{metrics.users}</strong></div>
-        <div><span>VIPs ativos</span><strong>{metrics.active}</strong></div>
-        <div><span>MRR estimado</span><strong>{money(metrics.mrrCents)}</strong></div>
-        <div><span>Pagamentos confirmados</span><strong>{metrics.payments}</strong></div>
-      </section>
-
-      <AdminConsole plans={plans} />
-
-      <section className="admin-panel">
-        <div className="section-heading small-heading"><div><span className="eyebrow">RECENTES</span><h2>Assinaturas</h2></div></div>
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>Usuário</th><th>Discord ID</th><th>Plano</th><th>Status</th><th>Provedor</th><th>Criada</th></tr></thead>
-            <tbody>
-              {(data.subscriptions as any[]).map((s) => (
-                <tr key={s.id}><td>{s.global_name || s.username}</td><td><code>{s.discord_user_id}</code></td><td>{s.plan_name}</td><td>{s.status}</td><td>{s.provider}</td><td>{new Date(s.created_at).toLocaleString("pt-BR")}</td></tr>
-              ))}
-              {data.subscriptions.length === 0 && <tr><td colSpan={6} className="empty-cell">Nenhuma assinatura registrada.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <section className="admin-panel"><AdminOrders orders={orders} /></section>
     </div>
   );
 }

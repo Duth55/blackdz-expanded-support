@@ -1,25 +1,37 @@
-import { PlanCard } from "@/components/plan-card";
-import { getPlans } from "@/lib/db";
+import Link from "next/link";
+import { money, VIP_PRICE_CENTS, VIP_ROLE_NAME } from "@/lib/config";
 
-export default async function VipPlansPage() {
-  const plans = await getPlans();
+export default function VipPage() {
   return (
     <div className="container page-shell">
       <section className="page-hero centered vip-page-hero">
         <span className="eyebrow">DBC: BLACKDZ VIP</span>
-        <h1>Escolha seu nível VIP</h1>
-        <p>Conecte seu Discord, escolha o plano ideal e acompanhe tudo pela sua área VIP. Os cargos são vinculados à mesma conta usada no login.</p>
+        <h1>V.I.P - DBC: BlackDz Expanded</h1>
+        <p>Um único V.I.P oficial, com análise manual de pagamento e liberação do cargo diretamente no Discord.</p>
       </section>
 
-      <section className="plans-grid full-plans">
-        {plans.map((plan) => <PlanCard key={plan.slug} plan={plan} />)}
+      <section className="single-vip-layout">
+        <article className="vip-product-card featured large-product">
+          <div className="vip-product-top"><span className="plan-icon giant">💎</span><span className="featured-tag">OFICIAL</span></div>
+          <h2>{VIP_ROLE_NAME}</h2>
+          <div className="plan-price"><strong>{money(VIP_PRICE_CENTS)}</strong></div>
+          <p className="vip-product-description">Ao adquirir o V.I.P, você apoia o DBC: BlackDz Expanded e recebe benefícios exclusivos dentro da BlackDz Community.</p>
+          <ul className="benefit-list">
+            <li>Cargo exclusivo no Discord</li>
+            <li>Novos canais V.I.P liberados</li>
+            <li>Conteúdos e spoilers exclusivos</li>
+            <li>Novidades antecipadas quando disponibilizadas</li>
+            <li>Apoio direto ao desenvolvimento do projeto</li>
+          </ul>
+          <Link href="/checkout/vip" className="btn btn-primary btn-wide btn-large">Comprar V.I.P</Link>
+        </article>
       </section>
 
       <section className="faq-grid section">
-        <article><span>01</span><h3>Posso cancelar?</h3><p>Sim. O cancelamento pode ser solicitado pela sua área VIP. Quando ele for confirmado, os benefícios vinculados à assinatura são encerrados.</p></article>
-        <article><span>02</span><h3>Preciso estar no servidor?</h3><p>Sim. Para o bot entregar o cargo, a conta do Discord usada no site precisa estar na BlackDz Community.</p></article>
-        <article><span>03</span><h3>O que é o DBC: BlackDz VIP?</h3><p>É o sistema oficial de apoio e benefícios do DBC: BlackDz Expanded, integrado diretamente ao Discord e administrado pelo próprio projeto.</p></article>
-        <article><span>04</span><h3>Como recebo o cargo?</h3><p>Depois que uma assinatura real for confirmada pelo provedor de pagamento, o sistema sincroniza automaticamente o cargo Apoiador, VIP ou VIP+.</p></article>
+        <article><span>01</span><h3>O pagamento é automático?</h3><p>Não. O site registra seu pedido, mas a confirmação é feita manualmente pela staff após conferir o recebimento.</p></article>
+        <article><span>02</span><h3>Como a staff recebe o pedido?</h3><p>Seu pedido chega em um canal privado do Discord pelo BlackDz Community Bot, com opções para confirmar ou recusar.</p></article>
+        <article><span>03</span><h3>Quando recebo o cargo?</h3><p>Assim que uma pessoa autorizada confirmar o pagamento, o cargo é adicionado automaticamente à sua conta do Discord.</p></article>
+        <article><span>04</span><h3>Preciso enviar comprovante?</h3><p>É recomendado, mas a confirmação final sempre deve ser feita conferindo o recebimento real na conta de pagamento.</p></article>
       </section>
     </div>
   );

@@ -5,7 +5,7 @@ import { Nav } from "@/components/nav";
 
 export const metadata: Metadata = {
   title: "DBC: BlackDz VIP",
-  description: "Área VIP oficial do DBC: BlackDz Expanded com planos, benefícios e integração com a BlackDz Community.",
+  description: "Área V.I.P oficial do DBC: BlackDz Expanded com pagamento manual, análise pela staff e integração com a BlackDz Community.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -21,7 +21,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <div className="container footer-inner">
             <div>
               <strong>DBC: BlackDz VIP</strong>
-              <p>Sistema oficial de membros do DBC: BlackDz Expanded. Projeto independente da comunidade, sem afiliação com Mojang, Microsoft ou Toei Animation.</p>
+              <p>Sistema oficial de V.I.P do DBC: BlackDz Expanded. Projeto independente da comunidade, sem afiliação com Mojang, Microsoft ou Toei Animation.</p>
             </div>
             <div className="footer-links">
               <a href="/termos">Termos</a>

@@ -1,6 +1,6 @@
 {
-  "name": "blackdz-vip",
-  "version": "1.0.1",
+  "name": "blackdz-vip-manual",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

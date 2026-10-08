@@ -522,3 +522,112 @@ body::before {
   .cta-box::after { display:none; }
   .trust-row { gap: 8px; }
 }
+
+/* ===== DBC BLACKDZ VIP V3 • PAGAMENTO MANUAL ===== */
+.single-product-section { max-width: 980px; }
+.vip-product-card {
+  position: relative;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 34px;
+  border: 1px solid rgba(174,139,255,.24);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139,92,246,.12), transparent 34%),
+    radial-gradient(circle at 0 100%, rgba(255,196,75,.055), transparent 28%),
+    linear-gradient(180deg, rgba(19,18,31,.96), rgba(8,8,14,.97));
+  box-shadow: 0 30px 90px rgba(0,0,0,.35), inset 0 0 70px rgba(119,73,241,.04);
+  overflow: hidden;
+}
+.vip-product-card::after { content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,transparent,#9f76ff,#ffd06a,transparent); }
+.vip-product-top { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.vip-product-card h2, .vip-product-card h3 { margin:20px 0 8px; font-size:clamp(26px,4vw,38px); }
+.vip-product-description { color:var(--muted); line-height:1.75; }
+.featured-tag { padding:7px 11px; border:1px solid rgba(176,142,255,.26); border-radius:999px; color:#d6c6ff; background:rgba(128,79,246,.12); font-size:10px; font-weight:900; letter-spacing:.12em; }
+.plan-price { margin:22px 0; }
+.plan-price strong { font-size:44px; letter-spacing:-.04em; }
+.single-vip-layout { padding-bottom:35px; }
+.large-product { width:min(790px,100%); }
+
+.manual-form { gap:22px; }
+.manual-step { display:flex; gap:14px; align-items:flex-start; margin-top:6px; }
+.manual-step h3 { margin:2px 0 5px; }
+.manual-step p { margin:0; color:var(--muted); line-height:1.65; }
+.step-badge { flex:0 0 auto; width:34px; height:34px; display:grid; place-items:center; border-radius:12px; background:linear-gradient(135deg,#9c6bff,#6236e5); font-weight:950; box-shadow:0 10px 24px rgba(112,67,230,.24); }
+.payment-box { display:grid; gap:12px; padding:20px; border:1px solid rgba(161,127,246,.16); border-radius:18px; background:rgba(124,80,239,.045); }
+.payment-box > div:not(.pix-key-row):not(.notice) { display:flex; justify-content:space-between; gap:18px; }
+.payment-box span { color:var(--muted); font-size:12px; }
+.payment-box strong { text-align:right; }
+.pix-key-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,.07); }
+.pix-key-row > div { min-width:0; display:grid; gap:7px; }
+.pix-key-row code { overflow-wrap:anywhere; font-size:13px; color:#e8e0ff; }
+.optional { color:#77758a; font-size:11px; font-weight:500; }
+.form-grid textarea { width:100%; resize:vertical; min-height:110px; }
+.form-grid input[type="file"] { padding:12px; }
+.form-grid small { display:block; margin-top:7px; color:#77758a; line-height:1.5; }
+.consent-row { align-items:flex-start; padding:15px 16px; border:1px solid rgba(255,255,255,.08); border-radius:15px; background:rgba(255,255,255,.02); }
+.consent-row input { margin-top:3px; }
+
+.success-panel, .pending-panel { min-height:330px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; padding:36px; }
+.success-panel > span, .pending-panel > span { font-size:52px; }
+.success-panel h2, .pending-panel h2 { margin:0; }
+.success-panel p, .pending-panel p { max-width:500px; color:var(--muted); line-height:1.7; }
+
+.order-status { display:inline-flex; align-items:center; gap:6px; width:max-content; padding:6px 10px; border:1px solid transparent; border-radius:999px; font-size:11px; font-weight:850; }
+.order-status.pending { color:#ffd88a; background:rgba(245,158,11,.09); border-color:rgba(245,158,11,.2); }
+.order-status.approved { color:#a7f3c1; background:rgba(34,197,94,.09); border-color:rgba(34,197,94,.2); }
+.order-status.rejected { color:#ffb1b1; background:rgba(239,68,68,.09); border-color:rgba(239,68,68,.2); }
+
+.manual-dashboard-grid { grid-template-columns:1.2fr .8fr; }
+.process-list { list-style:none; margin:18px 0 0; padding:0; display:grid; gap:14px; }
+.process-list li { display:flex; align-items:center; gap:12px; color:var(--muted); }
+.process-list b { width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:rgba(139,92,246,.09); color:#cbb5ff; }
+.orders-section { margin-top:22px; }
+.order-history-list { display:grid; gap:10px; }
+.order-history-card { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:16px 18px; border:1px solid rgba(255,255,255,.07); border-radius:15px; background:rgba(255,255,255,.018); color:inherit; text-decoration:none; transition:.18s ease; }
+.order-history-card:hover { border-color:rgba(161,127,246,.22); transform:translateY(-2px); }
+.order-history-card > div { display:grid; gap:5px; }
+.order-history-card > div:last-child { justify-items:end; }
+.order-history-card span:not(.order-status) { color:var(--muted); font-size:12px; }
+.empty-state { padding:30px; color:var(--muted); text-align:center; border:1px dashed rgba(255,255,255,.08); border-radius:16px; }
+
+.order-page { max-width:880px; }
+.order-result-card { display:flex; flex-direction:column; align-items:center; text-align:center; gap:13px; padding:44px 30px; border:1px solid rgba(255,255,255,.09); border-radius:28px; background:linear-gradient(180deg,rgba(18,18,30,.94),rgba(9,9,16,.96)); box-shadow:0 28px 85px rgba(0,0,0,.3); }
+.order-result-card.pending { border-color:rgba(245,158,11,.18); }
+.order-result-card.approved { border-color:rgba(34,197,94,.2); }
+.order-result-card.rejected { border-color:rgba(239,68,68,.2); }
+.order-result-card h1 { margin:0; }
+.order-result-card p { max-width:650px; margin:4px auto 0; color:var(--muted); line-height:1.75; }
+.order-result-icon { font-size:58px; }
+.order-details-card { margin-top:18px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; overflow:hidden; border:1px solid rgba(255,255,255,.08); border-radius:20px; background:rgba(255,255,255,.06); }
+.order-details-card > div { display:grid; gap:7px; padding:18px; background:#0d0d16; }
+.order-details-card span { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+.order-details-card .span-full { grid-column:1/-1; }
+.rejection-reason strong { color:#ffb2b2; }
+.center-actions { display:flex; justify-content:center; gap:12px; margin-top:22px; }
+
+.admin-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0 0 20px; }
+.admin-stat-grid > div { display:grid; gap:5px; padding:20px; border:1px solid rgba(255,255,255,.08); border-radius:18px; background:rgba(255,255,255,.018); }
+.admin-stat-grid strong { font-size:28px; }
+.admin-stat-grid span { color:var(--muted); font-size:12px; }
+.orders-table-wrap { overflow:auto; }
+.orders-table { width:100%; border-collapse:collapse; min-width:850px; }
+.orders-table th { text-align:left; padding:12px 14px; color:#858295; font-size:10px; text-transform:uppercase; letter-spacing:.1em; border-bottom:1px solid rgba(255,255,255,.08); }
+.orders-table td { padding:15px 14px; border-bottom:1px solid rgba(255,255,255,.06); vertical-align:middle; }
+.orders-table td > small { display:block; margin-top:5px; color:#6f6c7f; font-size:10px; }
+.orders-table a { color:#d6c7ff; }
+.table-actions { display:flex; gap:7px; }
+.mini-action { appearance:none; border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:8px 10px; font-weight:800; cursor:pointer; }
+.mini-action.approve { color:#b4f8c6; background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.18); }
+.mini-action.reject { color:#ffb8b8; background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.18); }
+.mini-action:disabled { opacity:.5; cursor:not-allowed; }
+
+@media (max-width: 760px) {
+  .manual-dashboard-grid, .order-details-card, .admin-stat-grid { grid-template-columns:1fr; }
+  .order-details-card .span-full { grid-column:auto; }
+  .order-history-card { align-items:flex-start; flex-direction:column; }
+  .order-history-card > div:last-child { justify-items:start; }
+  .pix-key-row { align-items:flex-start; flex-direction:column; }
+  .payment-box > div:not(.pix-key-row):not(.notice) { flex-direction:column; }
+  .payment-box strong { text-align:left; }
+}

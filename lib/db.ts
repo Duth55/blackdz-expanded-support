@@ -1,38 +1,26 @@
 import "server-only";
 import { neon } from "@neondatabase/serverless";
-import crypto from "crypto";
-import { DEFAULT_PLANS } from "@/lib/config";
 
-export type Plan = {
-  slug: string;
-  name: string;
-  role_id: string;
-  price_cents: number;
-  description: string;
-  benefits: string[];
-  badge: string;
-  featured: boolean;
-  active: boolean;
-  sort_order: number;
-  picpay_plan_id: string | null;
-};
+export type VipOrderStatus = "pending" | "approved" | "rejected";
 
-export type Subscription = {
+export type VipOrder = {
   id: string;
   discord_user_id: string;
-  plan_slug: string;
-  provider: string;
-  provider_subscription_id: string | null;
-  merchant_subscription_id: string | null;
-  status: string;
-  started_at: string;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
+  discord_username: string;
+  payer_name: string;
+  payment_method: string;
+  amount_cents: number;
+  note: string | null;
+  proof_name: string | null;
+  proof_url: string | null;
+  status: VipOrderStatus;
+  reviewer_discord_id: string | null;
+  rejection_reason: string | null;
+  discord_message_id: string | null;
+  discord_channel_id: string | null;
   created_at: string;
+  reviewed_at: string | null;
   updated_at: string;
-  plan_name?: string;
-  role_id?: string;
-  price_cents?: number;
 };
 
 export function hasDatabase() {
@@ -46,7 +34,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 
-async function ensureSchema() {
+export async function ensureSchema() {
   if (!hasDatabase()) return;
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
@@ -60,55 +48,28 @@ async function ensureSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
-    await sql`CREATE TABLE IF NOT EXISTS plans (
-      slug TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      role_id TEXT NOT NULL,
-      price_cents INTEGER NOT NULL,
-      description TEXT NOT NULL,
-      benefits JSONB NOT NULL DEFAULT '[]'::jsonb,
-      badge TEXT NOT NULL DEFAULT '💎',
-      featured BOOLEAN NOT NULL DEFAULT FALSE,
-      active BOOLEAN NOT NULL DEFAULT TRUE,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      picpay_plan_id TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`;
-    await sql`CREATE TABLE IF NOT EXISTS subscriptions (
+    await sql`CREATE TABLE IF NOT EXISTS vip_orders (
       id TEXT PRIMARY KEY,
       discord_user_id TEXT NOT NULL REFERENCES users(discord_id) ON DELETE CASCADE,
-      plan_slug TEXT NOT NULL REFERENCES plans(slug),
-      provider TEXT NOT NULL DEFAULT 'manual',
-      provider_subscription_id TEXT,
-      merchant_subscription_id TEXT,
+      discord_username TEXT NOT NULL,
+      payer_name TEXT NOT NULL,
+      payment_method TEXT NOT NULL DEFAULT 'PIX',
+      amount_cents INTEGER NOT NULL,
+      note TEXT,
+      proof_name TEXT,
+      proof_url TEXT,
       status TEXT NOT NULL DEFAULT 'pending',
-      started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      current_period_end TIMESTAMPTZ,
-      cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
-      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      reviewer_discord_id TEXT,
+      rejection_reason TEXT,
+      discord_message_id TEXT,
+      discord_channel_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      reviewed_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT vip_orders_status_check CHECK (status IN ('pending','approved','rejected'))
     )`;
-    await sql`CREATE INDEX IF NOT EXISTS subscriptions_user_idx ON subscriptions(discord_user_id, created_at DESC)`;
-    await sql`CREATE TABLE IF NOT EXISTS payments (
-      id TEXT PRIMARY KEY,
-      subscription_id TEXT REFERENCES subscriptions(id) ON DELETE SET NULL,
-      charge_id TEXT UNIQUE,
-      provider TEXT NOT NULL,
-      status TEXT NOT NULL,
-      amount_cents INTEGER,
-      paid_at TIMESTAMPTZ,
-      payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`;
-    await sql`CREATE TABLE IF NOT EXISTS webhook_events (
-      id TEXT PRIMARY KEY,
-      event_type TEXT,
-      payload JSONB NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`;
+    await sql`CREATE INDEX IF NOT EXISTS vip_orders_user_idx ON vip_orders(discord_user_id, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS vip_orders_status_idx ON vip_orders(status, created_at ASC)`;
     await sql`CREATE TABLE IF NOT EXISTS audit_logs (
       id TEXT PRIMARY KEY,
       actor_discord_id TEXT,
@@ -117,54 +78,8 @@ async function ensureSchema() {
       data JSONB NOT NULL DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
-
-    for (let i = 0; i < DEFAULT_PLANS.length; i++) {
-      const p = DEFAULT_PLANS[i];
-      await sql`INSERT INTO plans (slug,name,role_id,price_cents,description,benefits,badge,featured,sort_order)
-        VALUES (${p.slug}, ${p.name}, ${p.roleId}, ${p.priceCents}, ${p.description}, ${JSON.stringify(p.benefits)}::jsonb, ${p.badge}, ${p.featured}, ${i})
-        ON CONFLICT (slug) DO UPDATE SET
-          name=EXCLUDED.name,
-          role_id=EXCLUDED.role_id,
-          description=EXCLUDED.description,
-          benefits=EXCLUDED.benefits,
-          badge=EXCLUDED.badge,
-          featured=EXCLUDED.featured,
-          sort_order=EXCLUDED.sort_order,
-          updated_at=NOW()`;
-    }
   })();
   return schemaReady;
-}
-
-function fallbackPlans(): Plan[] {
-  return DEFAULT_PLANS.map((p, i) => ({
-    slug: p.slug,
-    name: p.name,
-    role_id: p.roleId,
-    price_cents: p.priceCents,
-    description: p.description,
-    benefits: [...p.benefits],
-    badge: p.badge,
-    featured: p.featured,
-    active: true,
-    sort_order: i,
-    picpay_plan_id: null,
-  }));
-}
-
-export async function getPlans(includeInactive = false): Promise<Plan[]> {
-  if (!hasDatabase()) return fallbackPlans();
-  await ensureSchema();
-  const sql = db();
-  const rows = includeInactive
-    ? await sql`SELECT * FROM plans ORDER BY sort_order, price_cents`
-    : await sql`SELECT * FROM plans WHERE active = TRUE ORDER BY sort_order, price_cents`;
-  return rows.map((r: any) => ({ ...r, benefits: Array.isArray(r.benefits) ? r.benefits : [] })) as Plan[];
-}
-
-export async function getPlan(slug: string) {
-  const plans = await getPlans(true);
-  return plans.find((p) => p.slug === slug) || null;
 }
 
 export async function upsertDiscordUser(user: {
@@ -187,179 +102,117 @@ export async function upsertDiscordUser(user: {
       updated_at=NOW()`;
 }
 
-export async function getLatestSubscription(discordUserId: string): Promise<Subscription | null> {
-  if (!hasDatabase()) return null;
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*, p.name AS plan_name, p.role_id, p.price_cents
-    FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug
-    WHERE s.discord_user_id=${discordUserId}
-    ORDER BY s.created_at DESC LIMIT 1`;
-  return (rows[0] as Subscription) || null;
-}
-
-export async function getActiveSubscription(discordUserId: string): Promise<Subscription | null> {
-  if (!hasDatabase()) return null;
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*, p.name AS plan_name, p.role_id, p.price_cents
-    FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug
-    WHERE s.discord_user_id=${discordUserId} AND s.status='active'
-    ORDER BY s.created_at DESC LIMIT 1`;
-  return (rows[0] as Subscription) || null;
-}
-
-export async function getOpenSubscription(discordUserId: string): Promise<Subscription | null> {
-  if (!hasDatabase()) return null;
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*, p.name AS plan_name, p.role_id, p.price_cents
-    FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug
-    WHERE s.discord_user_id=${discordUserId} AND s.status IN ('active','pending')
-    ORDER BY s.created_at DESC LIMIT 1`;
-  return (rows[0] as Subscription) || null;
-}
-
-export async function createSubscriptionRecord(input: {
+export async function createVipOrder(order: {
+  id: string;
   discordUserId: string;
-  planSlug: string;
-  provider: string;
-  providerSubscriptionId?: string | null;
-  merchantSubscriptionId?: string | null;
-  status?: string;
-  currentPeriodEnd?: string | null;
-  metadata?: unknown;
+  discordUsername: string;
+  payerName: string;
+  paymentMethod: string;
+  amountCents: number;
+  note?: string | null;
+  proofName?: string | null;
 }) {
   await ensureSchema();
   const sql = db();
-  const id = crypto.randomUUID();
-  await sql`INSERT INTO subscriptions
-    (id,discord_user_id,plan_slug,provider,provider_subscription_id,merchant_subscription_id,status,current_period_end,metadata)
-    VALUES (${id},${input.discordUserId},${input.planSlug},${input.provider},${input.providerSubscriptionId || null},${input.merchantSubscriptionId || null},${input.status || "active"},${input.currentPeriodEnd || null},${JSON.stringify(input.metadata || {})}::jsonb)`;
-  return id;
+  const rows = await sql`INSERT INTO vip_orders (
+    id,discord_user_id,discord_username,payer_name,payment_method,amount_cents,note,proof_name
+  ) VALUES (
+    ${order.id},${order.discordUserId},${order.discordUsername},${order.payerName},${order.paymentMethod},${order.amountCents},${order.note || null},${order.proofName || null}
+  ) RETURNING *`;
+  return rows[0] as VipOrder;
 }
 
-export async function updateSubscriptionStatus(id: string, status: string, currentPeriodEnd?: string | null) {
+export async function deleteVipOrder(id: string) {
   await ensureSchema();
   const sql = db();
-  await sql`UPDATE subscriptions SET status=${status}, current_period_end=COALESCE(${currentPeriodEnd || null}, current_period_end), updated_at=NOW() WHERE id=${id}`;
+  await sql`DELETE FROM vip_orders WHERE id=${id} AND status='pending'`;
 }
 
-export async function setProviderSubscription(id: string, providerSubscriptionId: string, merchantSubscriptionId: string, metadata: unknown, currentPeriodEnd?: string | null, status = "pending") {
-  await ensureSchema();
-  const sql = db();
-  await sql`UPDATE subscriptions SET provider_subscription_id=${providerSubscriptionId}, merchant_subscription_id=${merchantSubscriptionId}, metadata=${JSON.stringify(metadata || {})}::jsonb, current_period_end=${currentPeriodEnd || null}, status=${status}, updated_at=NOW() WHERE id=${id}`;
-}
-
-export async function recordPayment(input: {
-  subscriptionId?: string | null;
-  chargeId?: string | null;
-  provider: string;
-  status: string;
-  amountCents?: number | null;
-  paidAt?: string | null;
-  payload?: unknown;
+export async function attachDiscordReviewMessage(id: string, data: {
+  messageId: string;
+  channelId: string;
+  proofUrl?: string | null;
 }) {
   await ensureSchema();
   const sql = db();
-  const id = crypto.randomUUID();
-  if (input.chargeId) {
-    await sql`INSERT INTO payments (id,subscription_id,charge_id,provider,status,amount_cents,paid_at,payload)
-      VALUES (${id},${input.subscriptionId || null},${input.chargeId},${input.provider},${input.status},${input.amountCents || null},${input.paidAt || null},${JSON.stringify(input.payload || {})}::jsonb)
-      ON CONFLICT (charge_id) DO UPDATE SET status=EXCLUDED.status, amount_cents=COALESCE(EXCLUDED.amount_cents,payments.amount_cents), paid_at=COALESCE(EXCLUDED.paid_at,payments.paid_at), payload=EXCLUDED.payload, updated_at=NOW()`;
-  } else {
-    await sql`INSERT INTO payments (id,subscription_id,provider,status,amount_cents,paid_at,payload)
-      VALUES (${id},${input.subscriptionId || null},${input.provider},${input.status},${input.amountCents || null},${input.paidAt || null},${JSON.stringify(input.payload || {})}::jsonb)`;
-  }
+  await sql`UPDATE vip_orders SET
+    discord_message_id=${data.messageId},
+    discord_channel_id=${data.channelId},
+    proof_url=${data.proofUrl || null},
+    updated_at=NOW()
+    WHERE id=${id}`;
 }
 
-export async function findSubscriptionByChargeId(chargeId: string) {
+export async function getVipOrder(id: string): Promise<VipOrder | null> {
   if (!hasDatabase()) return null;
   await ensureSchema();
   const sql = db();
-  const rows = await sql`SELECT s.*,pl.role_id,pl.name AS plan_name FROM subscriptions s JOIN payments p ON p.subscription_id=s.id JOIN plans pl ON pl.slug=s.plan_slug WHERE p.charge_id=${chargeId} LIMIT 1`;
-  return (rows[0] as Subscription) || null;
+  const rows = await sql`SELECT * FROM vip_orders WHERE id=${id} LIMIT 1`;
+  return (rows[0] as VipOrder) || null;
 }
 
-export async function insertWebhookEvent(id: string, eventType: string | null, payload: unknown) {
+export async function getUserOrders(discordUserId: string, limit = 20): Promise<VipOrder[]> {
+  if (!hasDatabase()) return [];
   await ensureSchema();
   const sql = db();
-  const rows = await sql`INSERT INTO webhook_events (id,event_type,payload) VALUES (${id},${eventType},${JSON.stringify(payload)}::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id`;
-  return rows.length > 0;
+  const safeLimit = Math.max(1, Math.min(50, Number(limit) || 20));
+  const rows = await sql`SELECT * FROM vip_orders WHERE discord_user_id=${discordUserId} ORDER BY created_at DESC LIMIT ${safeLimit}`;
+  return rows as VipOrder[];
 }
 
-export async function listAdminData() {
-  if (!hasDatabase()) return { users: [], subscriptions: [], payments: [], logs: [] };
+export async function getPendingOrderForUser(discordUserId: string): Promise<VipOrder | null> {
+  if (!hasDatabase()) return null;
   await ensureSchema();
   const sql = db();
-  const [users, subscriptions, payments, logs] = await Promise.all([
-    sql`SELECT * FROM users ORDER BY updated_at DESC LIMIT 100`,
-    sql`SELECT s.*,p.name AS plan_name,p.role_id,p.price_cents,u.username,u.global_name FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug JOIN users u ON u.discord_id=s.discord_user_id ORDER BY s.created_at DESC LIMIT 100`,
-    sql`SELECT * FROM payments ORDER BY created_at DESC LIMIT 100`,
-    sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 50`,
-  ]);
-  return { users, subscriptions, payments, logs };
+  const rows = await sql`SELECT * FROM vip_orders WHERE discord_user_id=${discordUserId} AND status='pending' ORDER BY created_at DESC LIMIT 1`;
+  return (rows[0] as VipOrder) || null;
 }
 
-export async function adminMetrics() {
-  if (!hasDatabase()) return { users: 0, active: 0, mrrCents: 0, payments: 0 };
+export async function listVipOrders(limit = 100): Promise<VipOrder[]> {
+  if (!hasDatabase()) return [];
   await ensureSchema();
   const sql = db();
-  const rows = await sql`SELECT
-    (SELECT COUNT(*)::int FROM users) AS users,
-    (SELECT COUNT(*)::int FROM subscriptions WHERE status='active') AS active,
-    (SELECT COALESCE(SUM(p.price_cents),0)::int FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug WHERE s.status='active') AS mrr_cents,
-    (SELECT COUNT(*)::int FROM payments WHERE status IN ('CAPTURED','AUTHORIZED','PAID','SUCCESS')) AS payments`;
-  const r: any = rows[0] || {};
-  return { users: Number(r.users || 0), active: Number(r.active || 0), mrrCents: Number(r.mrr_cents || 0), payments: Number(r.payments || 0) };
+  const safeLimit = Math.max(1, Math.min(250, Number(limit) || 100));
+  const rows = await sql`SELECT * FROM vip_orders ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END, created_at DESC LIMIT ${safeLimit}`;
+  return rows as VipOrder[];
 }
 
-export async function updatePlanAdmin(input: { slug: string; priceCents: number; active: boolean; picpayPlanId?: string | null }) {
+export async function updateVipOrderReview(id: string, data: {
+  status: "approved" | "rejected";
+  reviewerDiscordId: string;
+  rejectionReason?: string | null;
+}) {
   await ensureSchema();
   const sql = db();
-  await sql`UPDATE plans SET price_cents=${input.priceCents}, active=${input.active}, picpay_plan_id=${input.picpayPlanId || null}, updated_at=NOW() WHERE slug=${input.slug}`;
+  const rows = await sql`UPDATE vip_orders SET
+    status=${data.status},
+    reviewer_discord_id=${data.reviewerDiscordId},
+    rejection_reason=${data.rejectionReason || null},
+    reviewed_at=NOW(),
+    updated_at=NOW()
+    WHERE id=${id} AND status='pending'
+    RETURNING *`;
+  return (rows[0] as VipOrder) || null;
 }
 
-export async function setPicPayPlanId(slug: string, picpayPlanId: string) {
+export async function reopenVipOrderAfterFailedApproval(id: string, reviewerDiscordId: string) {
   await ensureSchema();
   const sql = db();
-  await sql`UPDATE plans SET picpay_plan_id=${picpayPlanId}, updated_at=NOW() WHERE slug=${slug}`;
+  const rows = await sql`UPDATE vip_orders SET
+    status='pending',
+    reviewer_discord_id=NULL,
+    reviewed_at=NULL,
+    updated_at=NOW()
+    WHERE id=${id} AND status='approved' AND reviewer_discord_id=${reviewerDiscordId}
+    RETURNING *`;
+  return (rows[0] as VipOrder) || null;
 }
 
 export async function audit(actorDiscordId: string | null, action: string, target: string | null, data: unknown = {}) {
   if (!hasDatabase()) return;
   await ensureSchema();
   const sql = db();
-  await sql`INSERT INTO audit_logs (id,actor_discord_id,action,target,data) VALUES (${crypto.randomUUID()},${actorDiscordId},${action},${target},${JSON.stringify(data)}::jsonb)`;
-}
-
-export async function listSyncablePicPaySubscriptions() {
-  if (!hasDatabase()) return [] as Subscription[];
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*,p.role_id,p.name AS plan_name FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug WHERE s.status IN ('active','pending') AND s.provider='picpay' AND s.provider_subscription_id IS NOT NULL LIMIT 500`;
-  return rows as Subscription[];
-}
-
-export async function cancelOpenSubscriptions(discordUserId: string) {
-  if (!hasDatabase()) return;
-  await ensureSchema();
-  const sql = db();
-  await sql`UPDATE subscriptions SET status='canceled', updated_at=NOW() WHERE discord_user_id=${discordUserId} AND status IN ('active','pending')`;
-}
-
-export async function findSubscriptionByProviderId(providerSubscriptionId: string) {
-  if (!hasDatabase()) return null;
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*,p.role_id,p.name AS plan_name FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug WHERE s.provider_subscription_id=${providerSubscriptionId} LIMIT 1`;
-  return (rows[0] as Subscription) || null;
-}
-
-export async function listExpiredActiveSubscriptions() {
-  if (!hasDatabase()) return [] as Subscription[];
-  await ensureSchema();
-  const sql = db();
-  const rows = await sql`SELECT s.*,p.role_id,p.name AS plan_name FROM subscriptions s JOIN plans p ON p.slug=s.plan_slug WHERE s.status='active' AND s.current_period_end IS NOT NULL AND s.current_period_end < NOW() LIMIT 500`;
-  return rows as Subscription[];
+  const id = `audit_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  await sql`INSERT INTO audit_logs (id,actor_discord_id,action,target,data)
+    VALUES (${id},${actorDiscordId},${action},${target},${JSON.stringify(data)}::jsonb)`;
 }

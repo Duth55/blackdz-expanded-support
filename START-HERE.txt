@@ -1,47 +1,19 @@
-DBC: BLACKDZ VIP — COMEÇAR AQUI
+DBC: BLACKDZ VIP — V3 MANUAL
 
-PLANOS / CARGOS JÁ CONFIGURADOS
-💎 Apoiador — 1557153494467878962
-🌟 VIP      — 1557153493339611157
-👑 VIP+     — 1557153489019215965
-
-Dono: 1345387246282608751
-Servidor: 1519101675703369778
-
-1) NEON
-- Crie o banco PostgreSQL e copie a DATABASE_URL.
-- Na Vercel, adicione DATABASE_URL em Settings > Environment Variables.
-
-2) DISCORD
-- Use a mesma aplicação do BlackDz Community Bot.
-- Pegue Application ID / Client ID e Client Secret em Discord Developer Portal.
-- Na Vercel configure DISCORD_CLIENT_ID e DISCORD_CLIENT_SECRET.
-- Configure também DISCORD_BOT_TOKEN, DISCORD_GUILD_ID e OWNER_DISCORD_ID.
-- O bot precisa de Gerenciar Cargos e o cargo dele deve ficar ACIMA de 💎 Apoiador, 🌟 VIP e 👑 VIP+.
-
-3) URL DO SITE
-Depois do primeiro deploy, copie o domínio principal da Vercel, por exemplo:
-https://blackdz-vip.vercel.app
-
-Na Vercel crie/ajuste:
-NEXT_PUBLIC_SITE_URL=https://blackdz-vip.vercel.app
-
-No Discord Developer Portal > OAuth2 > Redirects adicione EXATAMENTE:
-https://blackdz-vip.vercel.app/api/auth/discord/callback
-
-ATENÇÃO: troque o exemplo pela URL REAL do seu projeto.
-A URL no Discord e NEXT_PUBLIC_SITE_URL precisam usar o mesmo domínio, protocolo https e sem erro de digitação.
-Depois salve no Discord e faça um Redeploy na Vercel.
-
-4) TESTE PRIMEIRO
-PAYMENTS_MODE=demo
-
-Nesse modo nenhuma cobrança real é feita. Use-o para testar login, dashboard e fluxo do site.
-
-5) PICPAY
-Só configure depois que login + banco + painel estiverem funcionando. Nunca coloque credenciais secretas no GitHub.
-
-IMPORTANTE
-- Não envie nem publique token do bot, Client Secret, SESSION_SECRET, DATABASE_URL ou PICPAY_CLIENT_SECRET.
-- Se um segredo for exposto, regenere/troque antes de continuar.
-- Leia README.md para detalhes técnicos.
+1) Suba a pasta SITE para o GitHub/Vercel.
+2) Mantenha DATABASE_URL, Discord OAuth e SESSION_SECRET já configurados.
+3) Remova/ignore todas as antigas variáveis do PicPay: elas não são mais usadas.
+4) Adicione na Vercel:
+   DISCORD_VIP_ROLE_ID=1557153493339611157
+   VIP_REVIEW_CHANNEL_ID=1552417366976102420
+   VIP_PRICE_CENTS=1990
+   PAYMENT_METHOD_LABEL=PIX
+   PAYMENT_PIX_KEY=SUA_CHAVE
+   PAYMENT_RECEIVER_LABEL=DBC: BlackDz Expanded
+   VIP_REVIEW_SECRET=UMA_STRING_GRANDE
+5) Use a mesma VIP_REVIEW_SECRET no bot hospedado na PhanomCloud.
+6) No bot, adicione VIP_SITE_URL=https://SEU-SITE.vercel.app
+7) Atualize o bot com a versão entregue junto deste site.
+8) Garanta que o cargo do bot esteja acima do cargo V.I.P e tenha Gerenciar Cargos.
+9) Faça Redeploy no site e reinicie o bot.
+10) Teste com uma conta secundária sem efetuar pagamento real: envie um pedido e use os botões no canal da staff.

@@ -10,8 +10,8 @@ export function Nav({ session }: { session: SessionUser | null }) {
       <div className="container nav-inner">
         <Brand />
         <nav className="nav-links" aria-label="Navegação principal">
-          <Link href="/vip">Planos VIP</Link>
-          {session && <Link href="/dashboard">Minha área VIP</Link>}
+          <Link href="/vip">V.I.P</Link>
+          {session && <Link href="/dashboard">Minha área V.I.P</Link>}
           {isAdmin && <Link href="/admin">Admin</Link>}
           {session ? (
             <Link href="/api/auth/logout" className="btn btn-ghost btn-small">Sair</Link>
